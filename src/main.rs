@@ -51,6 +51,9 @@ use std::{collections::HashMap, fmt::Display, io::Write};
 use clap::{Parser, Subcommand};
 use serde::{Deserialize, Serialize};
 
+mod money;
+
+use money::Money;
 #[derive(Debug, Parser)]
 struct Args {
     /// File to store data in
@@ -64,13 +67,13 @@ struct Args {
 #[derive(Debug, Subcommand)]
 enum Command {
     /// Add an hourly rate, with a name
-    AddRate { rate: f64, name: String },
+    AddRate { rate: Money, name: String },
     /// List hourly rates
     ShowRates,
     /// Add an invoice, with a date and amount. If a rate is given, assumes amount to be hours and calculates total.
     AddInvoice {
         date: String,
-        amount: f64,
+        amount: Money,
         rate: Option<String>,
     },
     /// List invoices
@@ -78,7 +81,7 @@ enum Command {
     /// Add a cost
     AddCost {
         date: String,
-        amount: f64,
+        amount: Money,
         name: String,
     },
     /// List costs
@@ -90,7 +93,7 @@ enum Command {
 #[derive(Debug, Serialize, Deserialize)]
 struct Invoice {
     date: String,
-    amount: f64,
+    amount: Money,
 }
 
 impl Display for Invoice {
@@ -101,13 +104,13 @@ impl Display for Invoice {
 
 #[derive(Debug, Serialize, Deserialize)]
 struct Rate {
-    rate: f64,
+    rate: Money,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 struct Cost {
     date: String,
-    amount: f64,
+    amount: Money,
     name: String,
 }
 
@@ -118,15 +121,15 @@ struct Moneybag {
     costs: Vec<Cost>,
 }
 
-fn sum_costs(costs: &[Cost]) -> f64 {
+fn sum_costs(costs: &[Cost]) -> Money {
     costs.iter().map(|cost| cost.amount).sum()
 }
 
-fn sum_invoices(invoices: &[Invoice]) -> f64 {
+fn sum_invoices(invoices: &[Invoice]) -> Money {
     invoices.iter().map(|invoice| invoice.amount).sum()
 }
 
-fn average_invoice(invoices: &[Invoice]) -> f64 {
+fn average_invoice(invoices: &[Invoice]) -> Money {
     sum_invoices(invoices) / invoices.len() as f64
 }
 
