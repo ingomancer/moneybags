@@ -99,7 +99,10 @@ enum AddCommand {
     Invoice {
         date: String,
         amount: Money,
+        #[clap(short, long)]
         rate: Option<String>,
+        #[clap(short, long)]
+        customer: Option<String>,
     },
     /// Add a cost
     #[clap(alias = "c")]
@@ -114,15 +117,36 @@ enum AddCommand {
 struct Invoice {
     date: String,
     amount: Money,
+    rate: Option<Rate>,
+    customer: Option<String>,
 }
 
 impl Display for Invoice {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}: {}", self.date, self.amount)
+        let amount = match self.rate {
+            Some(rate) => format!(
+                "{} ({} * {})",
+                rate.rate * self.amount,
+                self.amount,
+                rate.rate,
+            ),
+            None => format!("{}", self.amount),
+        };
+        if self.customer.is_some() {
+            write!(
+                f,
+                "{}: {} ({})",
+                self.date,
+                amount,
+                self.customer.as_ref().unwrap()
+            )
+        } else {
+            write!(f, "{}: {}", self.date, amount)
+        }
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Copy, Clone)]
 struct Rate {
     rate: Money,
 }
@@ -210,19 +234,31 @@ fn handle_add(add_command: AddCommand, moneybag: &mut Moneybag) {
         AddCommand::Rate { rate, name } => {
             moneybag.rates.insert(name, Rate { rate });
         }
-        AddCommand::Invoice { date, amount, rate } => {
+        AddCommand::Invoice {
+            date,
+            amount,
+            rate,
+            customer,
+        } => {
             if let Some(rate) = &rate {
                 if !moneybag.rates.contains_key(rate) {
                     println!("Rate {rate} not found in rates");
                 } else {
-                    let rate = moneybag.rates.get(rate).unwrap().rate;
+                    let rate = moneybag.rates.get(rate).unwrap();
                     moneybag.invoices.push(Invoice {
                         date,
-                        amount: rate * amount,
+                        amount,
+                        customer,
+                        rate: Some(*rate),
                     });
                 }
             } else {
-                moneybag.invoices.push(Invoice { date, amount });
+                moneybag.invoices.push(Invoice {
+                    date,
+                    amount,
+                    customer,
+                    rate: None,
+                });
             }
         }
         AddCommand::Cost { date, amount, name } => {
