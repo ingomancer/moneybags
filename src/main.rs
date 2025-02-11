@@ -177,7 +177,7 @@ fn load_moneybag(filepath: &String) -> Moneybag {
 }
 
 fn save_moneybag(moneybag: &Moneybag, filepath: &str) {
-    let json = serde_json::to_string(&moneybag)
+    let json = serde_json::to_string_pretty(&moneybag)
         .unwrap_or_else(|_| panic!("Could not serialize moneybag. Contents: {:?}", moneybag));
     let mut file = std::fs::OpenOptions::new()
         .read(true)
