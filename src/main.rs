@@ -66,28 +66,41 @@ struct Args {
 
 #[derive(Debug, Subcommand)]
 enum Command {
-    /// Add an hourly rate, with a name
-    AddRate { rate: Money, name: String },
+    #[clap(subcommand)]
+    Add(AddCommand),
+    #[clap(subcommand)]
+    Show(ShowCommand),
+
+    /// Calculate difference between costs and invoices
+    Balance,
+}
+
+#[derive(Debug, Subcommand)]
+enum ShowCommand {
     /// List hourly rates
-    ShowRates,
+    Rates,
+    /// List invoices
+    Invoices,
+    /// List costs
+    Costs,
+}
+
+#[derive(Debug, Subcommand)]
+enum AddCommand {
+    /// Add an hourly rate, with a name
+    Rate { rate: Money, name: String },
     /// Add an invoice, with a date and amount. If a rate is given, assumes amount to be hours and calculates total.
-    AddInvoice {
+    Invoice {
         date: String,
         amount: Money,
         rate: Option<String>,
     },
-    /// List invoices
-    ShowInvoices,
     /// Add a cost
-    AddCost {
+    Cost {
         date: String,
         amount: Money,
         name: String,
     },
-    /// List costs
-    ShowCosts,
-    /// Calculate difference between costs and invoices
-    Balance,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -147,21 +160,44 @@ fn main() {
             costs: vec![],
         };
     }
-    match args.command {
-        Command::AddRate { rate, name } => {
+
+    handle_command(args.command, &mut moneybag);
+
+    let json = serde_json::to_string(&moneybag).unwrap();
+    let mut file = std::fs::OpenOptions::new()
+        .read(true)
+        .write(true)
+        .create(true)
+        .truncate(true)
+        .open(filepath)
+        .unwrap();
+    file.write_all(json.as_bytes()).unwrap();
+}
+
+fn handle_command(command: Command, moneybag: &mut Moneybag) {
+    match command {
+        Command::Add(add_command) => handle_add(add_command, moneybag),
+        Command::Show(show_command) => handle_show(show_command, moneybag),
+        Command::Balance => {
+            let costs = sum_costs(&moneybag.costs);
+            let invoices = sum_invoices(&moneybag.invoices);
+            let average = average_invoice(&moneybag.invoices);
+            let total = invoices - costs;
+
+            println!("Costs: {}\nInvoices: {}\nTotal: {}\nAverage invoice: {}\nInvoices left to break even: {}", costs, invoices, total, average, -total/average);
+        }
+    }
+}
+
+fn handle_add(add_command: AddCommand, moneybag: &mut Moneybag) {
+    match add_command {
+        AddCommand::Rate { rate, name } => {
             moneybag.rates.insert(name, Rate { rate });
         }
-        Command::ShowRates => {
-            for (name, rate) in &moneybag.rates {
-                println!("{}: {}", name, rate.rate);
-            }
-        }
-
-        Command::AddInvoice { date, amount, rate } => {
+        AddCommand::Invoice { date, amount, rate } => {
             if let Some(rate) = &rate {
                 if !moneybag.rates.contains_key(rate) {
                     println!("Rate {rate} not found in rates");
-                    return;
                 } else {
                     let rate = moneybag.rates.get(rate).unwrap().rate;
                     moneybag.invoices.push(Invoice {
@@ -173,12 +209,7 @@ fn main() {
                 moneybag.invoices.push(Invoice { date, amount });
             }
         }
-        Command::ShowInvoices => {
-            for invoice in &moneybag.invoices {
-                println!("{}", invoice)
-            }
-        }
-        Command::AddCost { date, amount, name } => {
+        AddCommand::Cost { date, amount, name } => {
             if date == "monthly" {
                 for month in 1..=12 {
                     moneybag.costs.push(Cost {
@@ -191,28 +222,25 @@ fn main() {
                 moneybag.costs.push(Cost { date, amount, name });
             }
         }
-        Command::ShowCosts => {
+    }
+}
+
+fn handle_show(show_command: ShowCommand, moneybag: &Moneybag) {
+    match show_command {
+        ShowCommand::Rates => {
+            for (name, rate) in &moneybag.rates {
+                println!("{}: {}", name, rate.rate);
+            }
+        }
+        ShowCommand::Invoices => {
+            for invoice in &moneybag.invoices {
+                println!("{}", invoice)
+            }
+        }
+        ShowCommand::Costs => {
             for cost in &moneybag.costs {
                 println!("{} {} {}", cost.date, cost.amount, cost.name);
             }
         }
-        Command::Balance => {
-            let costs = sum_costs(&moneybag.costs);
-            let invoices = sum_invoices(&moneybag.invoices);
-            let average = average_invoice(&moneybag.invoices);
-            let total = invoices - costs;
-
-            println!("Costs: {}\nInvoices: {}\nTotal: {}\nAverage invoice: {}\nInvoices left to break even: {}", costs, invoices, total, average, -total/average);
-        }
     }
-
-    let json = serde_json::to_string(&moneybag).unwrap();
-    let mut file = std::fs::OpenOptions::new()
-        .read(true)
-        .write(true)
-        .create(true)
-        .truncate(true)
-        .open(filepath)
-        .unwrap();
-    file.write_all(json.as_bytes()).unwrap();
 }
