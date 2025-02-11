@@ -65,5 +65,5 @@ pub(crate) fn sum_invoices(invoices: &[Invoice]) -> Money {
 }
 
 pub(crate) fn average_invoice(invoices: &[Invoice]) -> Money {
-    sum_invoices(invoices) / invoices.len() as f64
+    sum_invoices(invoices) / invoices.len() as i64
 }
