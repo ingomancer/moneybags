@@ -58,7 +58,7 @@ use money::Money;
 struct Args {
     /// File to store data in
     #[arg(short, long, default_value = "~/.moneybags")]
-    file: Option<String>,
+    file: String,
 
     #[clap(subcommand)]
     command: Command,
@@ -148,7 +148,7 @@ fn average_invoice(invoices: &[Invoice]) -> Money {
 
 fn main() {
     let args = Args::parse();
-    let filepath = args.file.unwrap();
+    let filepath = args.file;
     let filepath = shellexpand::tilde(&filepath).to_string();
     let mut moneybag;
     if let Ok(json) = std::fs::read_to_string(&filepath) {
