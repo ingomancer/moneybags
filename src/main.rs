@@ -150,28 +150,37 @@ fn main() {
     let args = Args::parse();
     let filepath = args.file;
     let filepath = shellexpand::tilde(&filepath).to_string();
-    let mut moneybag;
-    if let Ok(json) = std::fs::read_to_string(&filepath) {
-        moneybag = serde_json::from_str(&json).expect("Could not parse file as a moneybag");
-    } else {
-        moneybag = Moneybag {
-            invoices: vec![],
-            rates: HashMap::new(),
-            costs: vec![],
-        };
-    }
+    let mut moneybag = load_moneybag(&filepath);
 
     handle_command(args.command, &mut moneybag);
 
-    let json = serde_json::to_string(&moneybag).unwrap();
+    save_moneybag(&moneybag, &filepath);
+}
+
+fn load_moneybag(filepath: &String) -> Moneybag {
+    if let Ok(json) = std::fs::read_to_string(filepath) {
+        serde_json::from_str(&json).expect("Could not parse file as a moneybag")
+    } else {
+        Moneybag {
+            invoices: vec![],
+            rates: HashMap::new(),
+            costs: vec![],
+        }
+    }
+}
+
+fn save_moneybag(moneybag: &Moneybag, filepath: &str) {
+    let json = serde_json::to_string(&moneybag)
+        .unwrap_or_else(|_| panic!("Could not serialize moneybag. Contents: {:?}", moneybag));
     let mut file = std::fs::OpenOptions::new()
         .read(true)
         .write(true)
         .create(true)
         .truncate(true)
         .open(filepath)
-        .unwrap();
-    file.write_all(json.as_bytes()).unwrap();
+        .expect("Could not open file for writing");
+    file.write_all(json.as_bytes())
+        .expect("Could not write to file");
 }
 
 fn handle_command(command: Command, moneybag: &mut Moneybag) {
