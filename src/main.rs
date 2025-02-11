@@ -46,12 +46,14 @@ moneybags balance
 -> Total: −21750
 */
 
-use std::{collections::HashMap, fmt::Display, io::Write};
+use std::{collections::HashMap, io::Write};
 
 use clap::{Parser, Subcommand};
-use serde::{Deserialize, Serialize};
 
 mod money;
+
+mod moneybag;
+use moneybag::{average_invoice, sum_costs, sum_invoices, Cost, Invoice, Moneybag, Rate};
 
 use money::Money;
 #[derive(Debug, Parser)]
@@ -111,70 +113,6 @@ enum AddCommand {
         amount: Money,
         name: String,
     },
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-struct Invoice {
-    date: String,
-    amount: Money,
-    rate: Option<Rate>,
-    customer: Option<String>,
-}
-
-impl Display for Invoice {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let amount = match self.rate {
-            Some(rate) => format!(
-                "{} ({} * {})",
-                rate.rate * self.amount,
-                self.amount,
-                rate.rate,
-            ),
-            None => format!("{}", self.amount),
-        };
-        if self.customer.is_some() {
-            write!(
-                f,
-                "{}: {} ({})",
-                self.date,
-                amount,
-                self.customer.as_ref().unwrap()
-            )
-        } else {
-            write!(f, "{}: {}", self.date, amount)
-        }
-    }
-}
-
-#[derive(Debug, Serialize, Deserialize, Copy, Clone)]
-struct Rate {
-    rate: Money,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-struct Cost {
-    date: String,
-    amount: Money,
-    name: String,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-struct Moneybag {
-    invoices: Vec<Invoice>,
-    rates: HashMap<String, Rate>,
-    costs: Vec<Cost>,
-}
-
-fn sum_costs(costs: &[Cost]) -> Money {
-    costs.iter().map(|cost| cost.amount).sum()
-}
-
-fn sum_invoices(invoices: &[Invoice]) -> Money {
-    invoices.iter().map(|invoice| invoice.amount).sum()
-}
-
-fn average_invoice(invoices: &[Invoice]) -> Money {
-    sum_invoices(invoices) / invoices.len() as f64
 }
 
 fn main() {
