@@ -60,28 +60,32 @@ struct Args {
     #[arg(short, long, default_value = "~/.moneybags")]
     file: String,
 
-    #[clap(subcommand)]
+    #[command(subcommand)]
     command: Command,
 }
 
 #[derive(Debug, Subcommand)]
 enum Command {
-    #[clap(subcommand)]
+    #[clap(subcommand, alias = "a")]
     Add(AddCommand),
-    #[clap(subcommand)]
+    #[clap(subcommand, alias = "s")]
     Show(ShowCommand),
 
     /// Calculate difference between costs and invoices
+    #[clap(alias = "b")]
     Balance,
 }
 
 #[derive(Debug, Subcommand)]
 enum ShowCommand {
     /// List hourly rates
+    #[clap(alias = "r")]
     Rates,
     /// List invoices
+    #[clap(alias = "i")]
     Invoices,
     /// List costs
+    #[clap(alias = "c")]
     Costs,
 }
 
@@ -89,13 +93,16 @@ enum ShowCommand {
 enum AddCommand {
     /// Add an hourly rate, with a name
     Rate { rate: Money, name: String },
+    #[clap(alias = "r")]
     /// Add an invoice, with a date and amount. If a rate is given, assumes amount to be hours and calculates total.
+    #[clap(alias = "i")]
     Invoice {
         date: String,
         amount: Money,
         rate: Option<String>,
     },
     /// Add a cost
+    #[clap(alias = "c")]
     Cost {
         date: String,
         amount: Money,
