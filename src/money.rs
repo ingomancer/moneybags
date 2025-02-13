@@ -83,7 +83,7 @@ impl Sum for Money {
 
 impl Display for Money {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}.{:0>2}", self.amount / 100, self.amount % 100)
+        write!(f, "{}.{:0>2}", self.amount / 100, (self.amount % 100).abs())
     }
 }
 
@@ -127,6 +127,8 @@ mod tests {
         assert_eq!(format!("{}", b), "20.01");
         let c = Money { amount: 200 };
         assert_eq!(format!("{}", c), "2.00");
+        let d = Money { amount: -153 };
+        assert_eq!(format!("{}", d), "-1.53");
     }
 
     #[test]
