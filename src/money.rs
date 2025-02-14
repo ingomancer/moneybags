@@ -93,7 +93,7 @@ impl FromStr for Money {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let amount = s
             .split('.')
-            .map(|part| part.parse::<i64>())
+            .map(str::parse::<i64>)
             .collect::<Result<Vec<_>, _>>()?;
         Ok(Money {
             amount: amount[0] * 100 + if amount.len() == 2 { amount[1] } else { 0 },
@@ -122,13 +122,13 @@ mod tests {
     #[test]
     fn test_money_display() {
         let a = Money { amount: 1000 };
-        assert_eq!(format!("{}", a), "10.00");
+        assert_eq!(format!("{a}"), "10.00");
         let b = Money { amount: 2001 };
-        assert_eq!(format!("{}", b), "20.01");
+        assert_eq!(format!("{b}"), "20.01");
         let c = Money { amount: 200 };
-        assert_eq!(format!("{}", c), "2.00");
+        assert_eq!(format!("{c}"), "2.00");
         let d = Money { amount: -153 };
-        assert_eq!(format!("{}", d), "-1.53");
+        assert_eq!(format!("{d}"), "-1.53");
     }
 
     #[test]

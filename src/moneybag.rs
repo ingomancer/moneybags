@@ -65,5 +65,7 @@ pub(crate) fn sum_invoices(invoices: &[Invoice]) -> Money {
 }
 
 pub(crate) fn average_invoice(invoices: &[Invoice]) -> Money {
-    sum_invoices(invoices) / invoices.len() as i64
+    sum_invoices(invoices)
+        / i64::try_from(invoices.len())
+            .unwrap_or_else(|_| panic!("Having more than {} invoices is not supported", i64::MAX))
 }

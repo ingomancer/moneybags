@@ -140,7 +140,7 @@ fn load_moneybag(filepath: &String) -> Moneybag {
 
 fn save_moneybag(moneybag: &Moneybag, filepath: &str) {
     let json = serde_json::to_string_pretty(&moneybag)
-        .unwrap_or_else(|_| panic!("Could not serialize moneybag. Contents: {:?}", moneybag));
+        .unwrap_or_else(|_| panic!("Could not serialize moneybag. Contents: {moneybag:?}"));
     let mut file = std::fs::OpenOptions::new()
         .read(true)
         .write(true)
@@ -155,7 +155,7 @@ fn save_moneybag(moneybag: &Moneybag, filepath: &str) {
 fn handle_command(command: Command, moneybag: &mut Moneybag) {
     match command {
         Command::Add(add_command) => handle_add(add_command, moneybag),
-        Command::Show(show_command) => handle_show(show_command, moneybag),
+        Command::Show(show_command) => handle_show(&show_command, moneybag),
         Command::Balance => {
             let costs = sum_costs(&moneybag.costs);
             let invoices = sum_invoices(&moneybag.invoices);
@@ -179,9 +179,7 @@ fn handle_add(add_command: AddCommand, moneybag: &mut Moneybag) {
             customer,
         } => {
             if let Some(rate) = &rate {
-                if !moneybag.rates.contains_key(rate) {
-                    println!("Rate {rate} not found in rates");
-                } else {
+                if moneybag.rates.contains_key(rate) {
                     let rate = moneybag.rates.get(rate).unwrap();
                     moneybag.invoices.push(Invoice {
                         date,
@@ -189,6 +187,8 @@ fn handle_add(add_command: AddCommand, moneybag: &mut Moneybag) {
                         customer,
                         rate: Some(*rate),
                     });
+                } else {
+                    println!("Rate {rate} not found in rates");
                 }
             } else {
                 moneybag.invoices.push(Invoice {
@@ -203,7 +203,7 @@ fn handle_add(add_command: AddCommand, moneybag: &mut Moneybag) {
             if date == "monthly" {
                 for month in 1..=12 {
                     moneybag.costs.push(Cost {
-                        date: format!("2025-{:02}", month),
+                        date: format!("2025-{month:02}"),
                         amount,
                         name: name.clone(),
                     });
@@ -215,7 +215,7 @@ fn handle_add(add_command: AddCommand, moneybag: &mut Moneybag) {
     }
 }
 
-fn handle_show(show_command: ShowCommand, moneybag: &Moneybag) {
+fn handle_show(show_command: &ShowCommand, moneybag: &Moneybag) {
     match show_command {
         ShowCommand::Rates => {
             for (name, rate) in &moneybag.rates {
@@ -224,7 +224,7 @@ fn handle_show(show_command: ShowCommand, moneybag: &Moneybag) {
         }
         ShowCommand::Invoices => {
             for invoice in &moneybag.invoices {
-                println!("{}", invoice)
+                println!("{invoice}");
             }
         }
         ShowCommand::Costs => {
