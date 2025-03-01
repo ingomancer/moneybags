@@ -61,12 +61,14 @@ struct Args {
     /// File to store data in
     #[arg(short, long, default_value = "~/.moneybags")]
     file: String,
-
-    #[command(subcommand)]
-    command: Command,
 }
 
-#[derive(Debug, Subcommand)]
+#[derive(Debug, Parser)]
+#[command(
+    multicall = true,
+    disable_help_subcommand = true,
+    disable_help_flag = true
+)]
 enum Command {
     #[clap(subcommand, alias = "a")]
     Add(AddCommand),
@@ -121,9 +123,26 @@ fn main() {
     let filepath = shellexpand::tilde(&filepath).to_string();
     let mut moneybag = load_moneybag(&filepath);
 
-    handle_command(args.command, &mut moneybag);
+    loop {
+        print!("> ");
+        std::io::stdout().flush().expect("Could not flush stdout");
+        let mut input = String::new();
+        std::io::stdin()
+            .read_line(&mut input)
+            .expect("Could not read line");
+        handle_command(
+            match Command::try_parse_from(shlex::split(input.trim()).unwrap()) {
+                Ok(command) => command,
+                Err(e) => {
+                    println!("{e}");
+                    continue;
+                }
+            },
+            &mut moneybag,
+        );
 
-    save_moneybag(&moneybag, &filepath);
+        save_moneybag(&moneybag, &filepath);
+    }
 }
 
 fn load_moneybag(filepath: &String) -> Moneybag {
