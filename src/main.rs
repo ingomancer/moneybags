@@ -61,6 +61,9 @@ struct Args {
     /// File to store data in
     #[arg(short, long, default_value = "~/.moneybags")]
     file: String,
+
+    #[arg(short, long, default_value_t = false)]
+    autosave: bool,
 }
 
 #[derive(Debug, Parser)]
@@ -74,6 +77,10 @@ enum Command {
     Add(AddCommand),
     #[clap(subcommand, alias = "s")]
     Show(ShowCommand),
+
+    Save {
+        path: Option<String>,
+    },
 
     /// Calculate difference between costs and invoices
     #[clap(alias = "b")]
@@ -139,9 +146,11 @@ fn main() {
                 }
             },
             &mut moneybag,
+            &filepath,
         );
-
-        save_moneybag(&moneybag, &filepath);
+        if args.autosave {
+            save_moneybag(&moneybag, &filepath);
+        }
     }
 }
 
@@ -171,7 +180,7 @@ fn save_moneybag(moneybag: &Moneybag, filepath: &str) {
         .expect("Could not write to file");
 }
 
-fn handle_command(command: Command, moneybag: &mut Moneybag) {
+fn handle_command(command: Command, moneybag: &mut Moneybag, filepath: &str) {
     match command {
         Command::Add(add_command) => handle_add(add_command, moneybag),
         Command::Show(show_command) => handle_show(&show_command, moneybag),
@@ -183,6 +192,10 @@ fn handle_command(command: Command, moneybag: &mut Moneybag) {
 
             println!("Costs: {}\nInvoices: {}\nTotal: {}\nAverage invoice: {}\nInvoices left to break even: {}", costs, invoices, total, average, -total/average);
         }
+        Command::Save { path } => match path {
+            Some(path) => save_moneybag(&moneybag, &path),
+            None => save_moneybag(&moneybag, filepath),
+        },
     }
 }
 
