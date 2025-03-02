@@ -137,17 +137,19 @@ fn main() {
         std::io::stdin()
             .read_line(&mut input)
             .expect("Could not read line");
-        handle_command(
-            match Command::try_parse_from(shlex::split(input.trim()).unwrap()) {
-                Ok(command) => command,
-                Err(e) => {
-                    println!("{e}");
-                    continue;
-                }
+        let command = match Command::try_parse_from(shlex::split(input.trim()).unwrap()) {
+            Ok(command) => match command {
+                Command::Save { path: None } => Command::Save {
+                    path: Some(filepath.clone()),
+                },
+                _ => command,
             },
-            &mut moneybag,
-            &filepath,
-        );
+            Err(e) => {
+                println!("{e}");
+                continue;
+            }
+        };
+        handle_command(command, &mut moneybag);
         if args.autosave {
             save_moneybag(&moneybag, &filepath);
         }
@@ -180,7 +182,7 @@ fn save_moneybag(moneybag: &Moneybag, filepath: &str) {
         .expect("Could not write to file");
 }
 
-fn handle_command(command: Command, moneybag: &mut Moneybag, filepath: &str) {
+fn handle_command(command: Command, moneybag: &mut Moneybag) {
     match command {
         Command::Add(add_command) => handle_add(add_command, moneybag),
         Command::Show(show_command) => handle_show(&show_command, moneybag),
@@ -193,8 +195,8 @@ fn handle_command(command: Command, moneybag: &mut Moneybag, filepath: &str) {
             println!("Costs: {}\nInvoices: {}\nTotal: {}\nAverage invoice: {}\nInvoices left to break even: {}", costs, invoices, total, average, -total/average);
         }
         Command::Save { path } => match path {
-            Some(path) => save_moneybag(&moneybag, &path),
-            None => save_moneybag(&moneybag, filepath),
+            Some(path) => save_moneybag(moneybag, &path),
+            None => unreachable!("Path should always be Some"),
         },
     }
 }
