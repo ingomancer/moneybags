@@ -191,8 +191,13 @@ fn handle_command(command: Command, moneybag: &mut Moneybag) {
             let invoices = sum_invoices(&moneybag.invoices);
             let average = average_invoice(&moneybag.invoices);
             let total = invoices - costs;
-
-            println!("Costs: {}\nInvoices: {}\nTotal: {}\nAverage invoice: {}\nInvoices left to break even: {}", costs, invoices, total, average, -total/average);
+            if average.is_zero() {
+                println!(
+                    "Costs: {costs}\nInvoices: {invoices}\nTotal: {total}\nAverage invoice: {average}"
+                );
+            } else {
+                println!("Costs: {}\nInvoices: {}\nTotal: {}\nAverage invoice: {}\nInvoices left to break even: {}", costs, invoices, total, average, -total/average);
+            }
         }
         Command::Save { path } => match path {
             Some(path) => save_moneybag(moneybag, &path),

@@ -7,9 +7,15 @@ use std::{
 
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Default)]
 pub(crate) struct Money {
     amount: i64,
+}
+
+impl Money {
+    pub fn is_zero(self) -> bool {
+        self.amount == 0
+    }
 }
 
 impl Sub for Money {

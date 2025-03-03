@@ -2,7 +2,7 @@ use std::{collections::HashMap, fmt::Display};
 
 use serde::{Deserialize, Serialize};
 
-use crate::Money;
+use crate::{money, Money};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub(crate) struct Invoice {
@@ -65,7 +65,11 @@ pub(crate) fn sum_invoices(invoices: &[Invoice]) -> Money {
 }
 
 pub(crate) fn average_invoice(invoices: &[Invoice]) -> Money {
-    sum_invoices(invoices)
-        / i64::try_from(invoices.len())
-            .unwrap_or_else(|_| panic!("Having more than {} invoices is not supported", i64::MAX))
+    let invoice_count = i64::try_from(invoices.len())
+        .unwrap_or_else(|_| panic!("Having more than {} invoices is not supported", i64::MAX));
+    if invoice_count != 0 {
+        sum_invoices(invoices) / invoice_count
+    } else {
+        money::Money::default()
+    }
 }
