@@ -8,42 +8,6 @@ Stores information in some sort of reasonable format, and allows you to look
 Can keep track of hourly rates, so invoices can be entered either as a sum, or as hours to invoice.
 Costs can be entered as one-offs, or as monthly costs.
 
-
-Example usage:
-moneybags add-rate 765 hourly
-moneybags add-rate 900 on-call
-
-moneybags add-invoice 2025-01-31 1000
-moneybags add-invoice 2025-01-31 50 hourly
-moneybags add-invoice 2025-01-31 10 on-call
-
-moneybags show-invoices
--> YTD: 48250
--> 2025-01-31 1000
--> 2025-01-31 38250 (50 * 765)
--> 2025-01-31 9000 (10 * 900)
-
-moneybags add-cost 2025-01 10000 insurance
-moneybags add-cost monthly 5000 wages
-
-moneybags show-costs
--> Total: 70000
-2025-01 10000 insurance
-2025-01 5000 wages
-2025-02 5000 wages
-2025-03 5000 wages
-2025-04 5000 wages
-2025-05 5000 wages
-2025-06 5000 wages
-2025-07 5000 wages
-2025-08 5000 wages
-2025-09 5000 wages
-2025-10 5000 wages
-2025-11 5000 wages
-2025-12 5000 wages
-
-moneybags balance
--> Total: −21750
 */
 
 use std::{collections::HashMap, io::Write};
@@ -75,8 +39,8 @@ struct Args {
 enum Command {
     #[clap(subcommand, alias = "a")]
     Add(AddCommand),
-    #[clap(subcommand, alias = "s")]
-    Show(ShowCommand),
+    #[clap(subcommand, alias = "l")]
+    List(ListCommand),
 
     Save {
         path: Option<String>,
@@ -88,7 +52,7 @@ enum Command {
 }
 
 #[derive(Debug, Subcommand)]
-enum ShowCommand {
+enum ListCommand {
     /// List hourly rates
     #[clap(alias = "r")]
     Rates,
@@ -103,8 +67,8 @@ enum ShowCommand {
 #[derive(Debug, Subcommand)]
 enum AddCommand {
     /// Add an hourly rate, with a name
-    Rate { rate: Money, name: String },
     #[clap(alias = "r")]
+    Rate { rate: Money, name: String },
     /// Add an invoice, with a date and amount. If a rate is given, assumes amount to be hours and calculates total.
     #[clap(alias = "i")]
     Invoice {
@@ -185,7 +149,7 @@ fn save_moneybag(moneybag: &Moneybag, filepath: &str) {
 fn handle_command(command: Command, moneybag: &mut Moneybag) {
     match command {
         Command::Add(add_command) => handle_add(add_command, moneybag),
-        Command::Show(show_command) => handle_show(&show_command, moneybag),
+        Command::List(list_command) => handle_list(&list_command, moneybag),
         Command::Balance => {
             let costs = sum_costs(&moneybag.costs);
             let invoices = sum_invoices(&moneybag.invoices);
@@ -254,21 +218,21 @@ fn handle_add(add_command: AddCommand, moneybag: &mut Moneybag) {
     }
 }
 
-fn handle_show(show_command: &ShowCommand, moneybag: &Moneybag) {
-    match show_command {
-        ShowCommand::Rates => {
+fn handle_list(list_command: &ListCommand, moneybag: &Moneybag) {
+    match list_command {
+        ListCommand::Rates => {
             for (name, rate) in &moneybag.rates {
                 println!("{}: {}", name, rate.rate);
             }
         }
-        ShowCommand::Invoices => {
-            for invoice in &moneybag.invoices {
-                println!("{invoice}");
+        ListCommand::Invoices => {
+            for (i, invoice) in moneybag.invoices.iter().enumerate() {
+                println!("{i}: {invoice}");
             }
         }
-        ShowCommand::Costs => {
-            for cost in &moneybag.costs {
-                println!("{} {} {}", cost.date, cost.amount, cost.name);
+        ListCommand::Costs => {
+            for (i, cost) in moneybag.costs.iter().enumerate() {
+                println!("{i}: {} {} {}", cost.date, cost.amount, cost.name);
             }
         }
     }
