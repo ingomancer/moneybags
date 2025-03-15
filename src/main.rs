@@ -42,6 +42,8 @@ enum Command {
     #[clap(subcommand, alias = "l")]
     List(ListCommand),
 
+    #[clap(subcommand, alias = "e")]
+    Edit(EditCommand),
     Save {
         path: Option<String>,
     },
@@ -88,6 +90,26 @@ enum AddCommand {
     },
 }
 
+#[derive(Debug, Subcommand)]
+enum EditCommand {
+    #[clap(alias = "r")]
+    Rate { name: String },
+    #[clap(alias = "i")]
+    Invoice { index: usize },
+    #[clap(alias = "c")]
+    Cost { index: usize },
+}
+
+fn prompt(prompt: &str) -> String {
+    print!("{prompt}");
+    std::io::stdout().flush().expect("Could not flush stdout");
+    let mut input = String::new();
+    std::io::stdin()
+        .read_line(&mut input)
+        .expect("Could not read line");
+    input.trim().to_string()
+}
+
 fn main() {
     let args = Args::parse();
     let filepath = args.file;
@@ -95,13 +117,8 @@ fn main() {
     let mut moneybag = load_moneybag(&filepath);
 
     loop {
-        print!("> ");
-        std::io::stdout().flush().expect("Could not flush stdout");
-        let mut input = String::new();
-        std::io::stdin()
-            .read_line(&mut input)
-            .expect("Could not read line");
-        let command = match Command::try_parse_from(shlex::split(input.trim()).unwrap()) {
+        let input = prompt("> ");
+        let command = match Command::try_parse_from(shlex::split(&input).unwrap()) {
             Ok(command) => match command {
                 Command::Save { path: None } => Command::Save {
                     path: Some(filepath.clone()),
@@ -157,8 +174,8 @@ fn handle_command(command: Command, moneybag: &mut Moneybag) {
             let total = invoices - costs;
             if average.is_zero() {
                 println!(
-                    "Costs: {costs}\nInvoices: {invoices}\nTotal: {total}\nAverage invoice: {average}"
-                );
+                                "Costs: {costs}\nInvoices: {invoices}\nTotal: {total}\nAverage invoice: {average}"
+                            );
             } else {
                 println!("Costs: {}\nInvoices: {}\nTotal: {}\nAverage invoice: {}\nInvoices left to break even: {}", costs, invoices, total, average, -total/average);
             }
@@ -167,6 +184,73 @@ fn handle_command(command: Command, moneybag: &mut Moneybag) {
             Some(path) => save_moneybag(moneybag, &path),
             None => unreachable!("Path should always be Some"),
         },
+        Command::Edit(edit_command) => handle_edit(edit_command, moneybag),
+    }
+}
+
+fn handle_edit(edit_command: EditCommand, moneybag: &mut Moneybag) {
+    match edit_command {
+        EditCommand::Rate { name } => edit_rate(&name, moneybag),
+        EditCommand::Invoice { index } => edit_invoice(index, moneybag),
+        EditCommand::Cost { index } => edit_cost(index, moneybag),
+    }
+}
+
+fn edit_cost(index: usize, moneybag: &mut Moneybag) {
+    let cost = moneybag.costs.get_mut(index).expect("Cost not found");
+    let mut input = prompt(&format!("date ({}): ", cost.date));
+    if !input.is_empty() {
+        cost.date = input;
+    }
+    input = prompt(&format!("amount ({}): ", cost.amount));
+    if !input.is_empty() {
+        cost.amount = input.parse().expect("Could not parse amount");
+    }
+    input = prompt(&format!("name ({}): ", cost.name));
+    if !input.is_empty() {
+        cost.name = input;
+    }
+}
+
+fn edit_invoice(index: usize, moneybag: &mut Moneybag) {
+    let invoice = moneybag.invoices.get_mut(index).expect("Invoice not found");
+    let mut input = prompt(&format!("date ({}): ", invoice.date));
+    if !input.is_empty() {
+        invoice.date = input;
+    }
+    input = prompt(&format!("amount ({}): ", invoice.amount));
+    if !input.is_empty() {
+        invoice.amount = input.parse().expect("Could not parse amount");
+    }
+
+    if let Some(customer) = &invoice.customer {
+        input = prompt(&format!("customer ({customer}): "));
+    } else {
+        input = prompt("customer: ");
+    }
+    if !input.is_empty() {
+        invoice.customer = Some(input);
+    }
+
+    if let Some(rate) = &invoice.rate {
+        input = prompt(&format!("rate ({}): ", rate.rate));
+    } else {
+        input = prompt("rate: ");
+    }
+    if !input.is_empty() {
+        if moneybag.rates.contains_key(&input) {
+            invoice.rate = Some(*moneybag.rates.get(&input).unwrap());
+        } else {
+            println!("Rate {input} not found in rates");
+        }
+    }
+}
+
+fn edit_rate(name: &str, moneybag: &mut Moneybag) {
+    let rate = moneybag.rates.get_mut(name).expect("Rate not found");
+    let input = prompt(&format!("rate ({}): ", rate.rate));
+    if !input.is_empty() {
+        rate.rate = input.parse().expect("Could not parse rate");
     }
 }
 
