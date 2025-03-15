@@ -41,12 +41,13 @@ enum Command {
     Add(AddCommand),
     #[clap(subcommand, alias = "l")]
     List(ListCommand),
-
     #[clap(subcommand, alias = "e")]
     Edit(EditCommand),
-    Save {
-        path: Option<String>,
-    },
+    #[clap(subcommand, alias = "d")]
+    Delete(DeleteCommand),
+
+    #[clap(alias = "s")]
+    Save { path: Option<String> },
 
     /// Calculate difference between costs and invoices
     #[clap(alias = "b")]
@@ -92,6 +93,16 @@ enum AddCommand {
 
 #[derive(Debug, Subcommand)]
 enum EditCommand {
+    #[clap(alias = "r")]
+    Rate { name: String },
+    #[clap(alias = "i")]
+    Invoice { index: usize },
+    #[clap(alias = "c")]
+    Cost { index: usize },
+}
+
+#[derive(Debug, Subcommand)]
+enum DeleteCommand {
     #[clap(alias = "r")]
     Rate { name: String },
     #[clap(alias = "i")]
@@ -173,9 +184,7 @@ fn handle_command(command: Command, moneybag: &mut Moneybag) {
             let average = average_invoice(&moneybag.invoices);
             let total = invoices - costs;
             if average.is_zero() {
-                println!(
-                                "Costs: {costs}\nInvoices: {invoices}\nTotal: {total}\nAverage invoice: {average}"
-                            );
+                println!("Costs: {costs}\nInvoices: {invoices}\nTotal: {total}\nAverage invoice: {average}");
             } else {
                 println!("Costs: {}\nInvoices: {}\nTotal: {}\nAverage invoice: {}\nInvoices left to break even: {}", costs, invoices, total, average, -total/average);
             }
@@ -185,6 +194,21 @@ fn handle_command(command: Command, moneybag: &mut Moneybag) {
             None => unreachable!("Path should always be Some"),
         },
         Command::Edit(edit_command) => handle_edit(edit_command, moneybag),
+        Command::Delete(delete_command) => handle_delete(delete_command, moneybag),
+    }
+}
+
+fn handle_delete(delete_command: DeleteCommand, moneybag: &mut Moneybag) {
+    match delete_command {
+        DeleteCommand::Rate { name } => {
+            moneybag.rates.remove(&name);
+        }
+        DeleteCommand::Invoice { index } => {
+            moneybag.invoices.remove(index);
+        }
+        DeleteCommand::Cost { index } => {
+            moneybag.costs.remove(index);
+        }
     }
 }
 
