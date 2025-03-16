@@ -61,7 +61,16 @@ pub(crate) fn sum_costs(costs: &[Cost]) -> Money {
 }
 
 pub(crate) fn sum_invoices(invoices: &[Invoice]) -> Money {
-    invoices.iter().map(|invoice| invoice.amount).sum()
+    invoices
+        .iter()
+        .map(|invoice| {
+            if let Some(rate) = invoice.rate {
+                invoice.amount * rate.rate
+            } else {
+                invoice.amount
+            }
+        })
+        .sum()
 }
 
 pub(crate) fn average_invoice(invoices: &[Invoice]) -> Money {
