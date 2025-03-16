@@ -13,11 +13,7 @@ pub(crate) struct Args {
 }
 
 #[derive(Debug, Parser)]
-#[command(
-    multicall = true,
-    disable_help_subcommand = true,
-    disable_help_flag = true
-)]
+#[command(multicall = true, disable_help_flag = true)]
 pub(crate) enum Command {
     #[clap(subcommand, alias = "a")]
     Add(AddCommand),
