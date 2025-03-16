@@ -12,104 +12,15 @@ Costs can be entered as one-offs, or as monthly costs.
 
 use std::{collections::HashMap, io::Write};
 
-use clap::{Parser, Subcommand};
-
+mod args;
 mod money;
 
 mod moneybag;
+use args::{AddCommand, Args, Command, DeleteCommand, EditCommand, ListCommand};
+use clap::Parser;
 use moneybag::{average_invoice, sum_costs, sum_invoices, Cost, Invoice, Moneybag, Rate};
 
 use money::Money;
-#[derive(Debug, Parser)]
-struct Args {
-    /// File to store data in
-    #[arg(short, long, default_value = "~/.moneybags")]
-    file: String,
-
-    #[arg(short, long, default_value_t = false)]
-    autosave: bool,
-}
-
-#[derive(Debug, Parser)]
-#[command(
-    multicall = true,
-    disable_help_subcommand = true,
-    disable_help_flag = true
-)]
-enum Command {
-    #[clap(subcommand, alias = "a")]
-    Add(AddCommand),
-    #[clap(subcommand, alias = "l")]
-    List(ListCommand),
-    #[clap(subcommand, alias = "e")]
-    Edit(EditCommand),
-    #[clap(subcommand, alias = "d")]
-    Delete(DeleteCommand),
-
-    #[clap(alias = "s")]
-    Save { path: Option<String> },
-
-    /// Calculate difference between costs and invoices
-    #[clap(alias = "b")]
-    Balance,
-}
-
-#[derive(Debug, Subcommand)]
-enum ListCommand {
-    /// List hourly rates
-    #[clap(alias = "r")]
-    Rates,
-    /// List invoices
-    #[clap(alias = "i")]
-    Invoices,
-    /// List costs
-    #[clap(alias = "c")]
-    Costs,
-}
-
-#[derive(Debug, Subcommand)]
-enum AddCommand {
-    /// Add an hourly rate, with a name
-    #[clap(alias = "r")]
-    Rate { rate: Money, name: String },
-    /// Add an invoice, with a date and amount. If a rate is given, assumes amount to be hours and calculates total.
-    #[clap(alias = "i")]
-    Invoice {
-        date: String,
-        amount: Money,
-        #[clap(short, long)]
-        rate: Option<String>,
-        #[clap(short, long)]
-        customer: Option<String>,
-    },
-    /// Add a cost
-    #[clap(alias = "c")]
-    Cost {
-        date: String,
-        amount: Money,
-        name: String,
-    },
-}
-
-#[derive(Debug, Subcommand)]
-enum EditCommand {
-    #[clap(alias = "r")]
-    Rate { name: String },
-    #[clap(alias = "i")]
-    Invoice { index: usize },
-    #[clap(alias = "c")]
-    Cost { index: usize },
-}
-
-#[derive(Debug, Subcommand)]
-enum DeleteCommand {
-    #[clap(alias = "r")]
-    Rate { name: String },
-    #[clap(alias = "i")]
-    Invoice { index: usize },
-    #[clap(alias = "c")]
-    Cost { index: usize },
-}
 
 fn prompt(prompt: &str) -> String {
     print!("{prompt}");
