@@ -35,4 +35,26 @@ Commands:
   help     Print this message or the help of the given subcommand(s)
 ```
 
-I will probably expand this chapter in the future! For now, the built-in help command and exploration will be your guide.
+Here are some small examples. With a new file:
+```
+> balance
+Costs: 0.00
+Invoices: 0.00
+Total: 0.00
+Average invoice: 0.00
+
+> add rate 900 hourly
+
+> add cost monthly 50000 wages
+
+> add invoice 2025-0131 150 --rate hourly
+
+> list invoices
+0: 2025-01-31: 135000.00 (150.00 * 900.00)
+
+> balance
+Costs: 600000.00
+Invoices: 135000.00
+Total: -465000.00
+Average invoice: 135000.00
+Invoices left to break even: 3.44
