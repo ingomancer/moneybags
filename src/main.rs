@@ -1,15 +1,3 @@
-/*
-
-Commandline yearly costs vs invoicing tracker.
-
-Stores information in some sort of reasonable format, and allows you to look
- at the costs of the year, and the invoices that have been paid.
-
-Can keep track of hourly rates, so invoices can be entered either as a sum, or as hours to invoice.
-Costs can be entered as one-offs, or as monthly costs.
-
-*/
-
 use std::{collections::HashMap, io::Write};
 
 mod args;

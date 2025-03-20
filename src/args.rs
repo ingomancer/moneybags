@@ -15,15 +15,19 @@ pub(crate) struct Args {
 #[derive(Debug, Parser)]
 #[command(multicall = true, disable_help_flag = true)]
 pub(crate) enum Command {
+    /// Add a rate, invoice, or cost
     #[clap(subcommand, alias = "a")]
     Add(AddCommand),
+    /// List rates, invoices, or costs
     #[clap(subcommand, alias = "l")]
     List(ListCommand),
+    /// Interactively edit a rate, invoice, or cost
     #[clap(subcommand, alias = "e")]
     Edit(EditCommand),
+    /// Delete a rate, invoice, or cost
     #[clap(subcommand, alias = "d")]
     Delete(DeleteCommand),
-
+    /// Write pending changes to file. There is currently no way to see pending changes
     #[clap(alias = "s")]
     Save { path: Option<String> },
 
@@ -61,7 +65,7 @@ pub(crate) enum AddCommand {
         #[clap(short, long)]
         customer: Option<String>,
     },
-    /// Add a cost
+    /// Add a cost. If date is "monthly", an entry will be generated for each month.
     #[clap(alias = "c")]
     Cost {
         date: String,
@@ -72,20 +76,26 @@ pub(crate) enum AddCommand {
 
 #[derive(Debug, Subcommand)]
 pub(crate) enum EditCommand {
+    /// Edit a rate, identified by name
     #[clap(alias = "r")]
     Rate { name: String },
+    /// Edit an invoice, identified by index (see list)
     #[clap(alias = "i")]
     Invoice { index: usize },
+    /// Edit a cost, identified by index (see list)
     #[clap(alias = "c")]
     Cost { index: usize },
 }
 
 #[derive(Debug, Subcommand)]
 pub(crate) enum DeleteCommand {
+    /// Delete a rate, identified by name
     #[clap(alias = "r")]
     Rate { name: String },
+    /// Delete an invoice, identified by index (see list)
     #[clap(alias = "i")]
     Invoice { index: usize },
+    /// Delete a cost, identified by index (see list)
     #[clap(alias = "c")]
     Cost { index: usize },
 }
