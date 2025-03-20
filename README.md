@@ -52,6 +52,13 @@ Average invoice: 0.00
 > list invoices
 0: 2025-01-31: 135000.00 (150.00 * 900.00)
 
+> list costs
+0: 2025-01 50000.00 wages
+1: 2025-02 50000.00 wages
+...
+10: 2025-11 50000.00 wages
+11: 2025-12 50000.00 wages
+
 > balance
 Costs: 600000.00
 Invoices: 135000.00
