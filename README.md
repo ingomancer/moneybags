@@ -26,11 +26,11 @@ After starting, you will be met by a prompt, where you can for eample write help
 Usage: <COMMAND>
 
 Commands:
-  add      
-  list     
-  edit     
-  delete   
-  save     
+  add      Add a rate, invoice, or cost
+  list     List rates, invoices, or costs
+  edit     Interactively edit a rate, invoice, or cost
+  delete   Delete a rate, invoice, or cost
+  save     Write pending changes to file. There is currently no way to see pending changes
   balance  Calculate difference between costs and invoices
   help     Print this message or the help of the given subcommand(s)
 ```
