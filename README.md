@@ -47,7 +47,7 @@ Average invoice: 0.00
 
 > add cost monthly 50000 wages
 
-> add invoice 2025-0131 150 --rate hourly
+> add invoice 2025-01-31 150 --rate hourly
 
 > list invoices
 0: 2025-01-31: 135000.00 (150.00 * 900.00)
