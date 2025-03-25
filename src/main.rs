@@ -125,10 +125,18 @@ fn edit_cost(index: usize, moneybag: &mut Moneybag) {
     if !input.is_empty() {
         cost.date = input;
     }
-    input = prompt(&format!("amount ({}): ", cost.amount));
-    if !input.is_empty() {
-        cost.amount = input.parse().expect("Could not parse amount");
-    }
+
+    cost.amount = loop {
+        input = prompt(&format!("amount ({}): ", cost.amount));
+        if input.is_empty() {
+            break cost.amount;
+        }
+        if let Ok(amount) = input.parse() {
+            break amount;
+        }
+        println!("Could not parse amount");
+    };
+
     input = prompt(&format!("name ({}): ", cost.name));
     if !input.is_empty() {
         cost.name = input;
@@ -141,10 +149,17 @@ fn edit_invoice(index: usize, moneybag: &mut Moneybag) {
     if !input.is_empty() {
         invoice.date = input;
     }
-    input = prompt(&format!("amount ({}): ", invoice.amount));
-    if !input.is_empty() {
-        invoice.amount = input.parse().expect("Could not parse amount");
-    }
+
+    invoice.amount = loop {
+        input = prompt(&format!("amount ({}): ", invoice.amount));
+        if input.is_empty() {
+            break invoice.amount;
+        }
+        if let Ok(amount) = input.parse() {
+            break amount;
+        }
+        println!("Could not parse amount");
+    };
 
     if let Some(customer) = &invoice.customer {
         input = prompt(&format!("customer ({customer}): "));
@@ -171,10 +186,17 @@ fn edit_invoice(index: usize, moneybag: &mut Moneybag) {
 
 fn edit_rate(name: &str, moneybag: &mut Moneybag) {
     let rate = moneybag.rates.get_mut(name).expect("Rate not found");
-    let input = prompt(&format!("rate ({}): ", rate.rate));
-    if !input.is_empty() {
-        rate.rate = input.parse().expect("Could not parse rate");
-    }
+
+    rate.rate = loop {
+        let input = prompt(&format!("rate ({}): ", rate.rate));
+        if input.is_empty() {
+            break rate.rate;
+        }
+        if let Ok(rate) = input.parse() {
+            break rate;
+        }
+        println!("Could not parse rate");
+    };
 }
 
 fn handle_add(add_command: AddCommand, moneybag: &mut Moneybag) {
